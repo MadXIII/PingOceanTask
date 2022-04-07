@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Store struct {
@@ -24,7 +25,7 @@ func (s *Store) setMap(url string, count int) error {
 	defer s.Unlock()
 
 	if _, ok := s.Map[url]; ok {
-		return errors.New("key is already exists")
+		return errors.New("url is already exists")
 	}
 	s.Map[url] = count
 
@@ -38,38 +39,34 @@ func (s *Store) getMap() map[string]int {
 	return s.Map
 }
 
-func goSender(ctx context.Context, urls []string, str string) (map[string]int, error) {
+func goSender(ctx context.Context, urls []string, str string) map[string]int {
 	m := NewStore()
 
 	wg := sync.WaitGroup{}
 
 	for _, url := range urls {
-		select {
-		case <-ctx.Done():
-			fmt.Println("Test")
-			return nil, errors.New("timeout limit")
-		default:
-			wg.Add(1)
-			go func(url string) {
-				defer wg.Done()
-				count, err := searchAndCount(ctx, url, str)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				if err := m.setMap(url, count); err != nil {
-					fmt.Println(err)
-					return
-				}
-			}(url)
-		}
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+			count, err := searchAndCount(ctx, url, str)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			if err := m.setMap(url, count); err != nil {
+				fmt.Println(err)
+				return
+			}
+		}(url)
 	}
 	wg.Wait()
 
-	return m.getMap(), nil
+	return m.getMap()
 }
 
-func searchAndCount(ctx context.Context, url, str string) (int, error) {
+func searchAndCount(ctxParent context.Context, url, str string) (int, error) {
+	ctx, cancelFunc := context.WithTimeout(ctxParent, 10*time.Second)
+	defer cancelFunc()
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return 0, fmt.Errorf("error searchAndCount, NewRequest: %w", err)
@@ -77,6 +74,7 @@ func searchAndCount(ctx context.Context, url, str string) (int, error) {
 
 	client := http.Client{}
 
+	req = req.WithContext(ctx)
 	resp, err := client.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("error searchAndCount, clientDo: %w", err)

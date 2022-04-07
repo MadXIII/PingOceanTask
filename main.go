@@ -29,14 +29,11 @@ func main() {
 		log.Printf("No URLs")
 	}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 
 	defer cancelFunc()
 
-	m, err := goSender(ctx, urls, *str)
-	if err != nil {
-		log.Println(err)
-	}
+	m := goSender(ctx, urls, *str)
 
 	for key, val := range m {
 		fmt.Printf("%s %d\n", key, val)
