@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSearch(t *testing.T) {
@@ -23,7 +24,6 @@ func TestSearch(t *testing.T) {
 
 	for _, test := range tests {
 		result := goSender(context.Background(), test.urls, test.str)
-
 		if !reflect.DeepEqual(result, test.wantResult) {
 			t.Errorf("Wait %v, but got %v", result, test.wantResult)
 		}
@@ -38,24 +38,20 @@ func TestSetMap(t *testing.T) {
 		wantError error
 	}{
 		"Success": {
-			m:         Store{Map: map[string]int{"https://pingocean.com/": 284}},
+			m:         Store{Map: map[string]int{"https://pingocean.com/": 10}},
 			url:       "https://github.com/",
-			count:     0,
+			count:     10,
 			wantError: nil,
 		},
 		"Wait Error Url is already exists": {
-			m:         Store{Map: map[string]int{"https://pingocean.com/": 284}},
+			m:         Store{Map: map[string]int{"https://pingocean.com/": 0}},
 			url:       "https://pingocean.com/",
-			count:     284,
-			wantError: errors.New("url is already exists"),
+			count:     0,
+			wantError: errors.New("https://pingocean.com/ url is already exists"),
 		},
 	}
-
 	for _, test := range tests {
-		if err := test.m.setMap(test.url, test.count); err != test.wantError {
-			fmt.Println(test.wantError)
-			fmt.Println(err)
-			t.Errorf("Wait %v, but got %v", test.wantError, err)
-		}
+		err := test.m.setMap(test.url, test.count)
+		assert.Equal(t, err, test.wantError)
 	}
 }

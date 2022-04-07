@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +24,7 @@ func (s *Store) setMap(url string, count int) error {
 	defer s.Unlock()
 
 	if _, ok := s.Map[url]; ok {
-		return errors.New("url is already exists")
+		return fmt.Errorf("%s url is already exists", url)
 	}
 	s.Map[url] = count
 
