@@ -23,7 +23,7 @@ func TestSearch(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := goSender(context.Background(), test.urls, test.str)
+		result := worker(context.Background(), test.urls, test.str)
 		if !reflect.DeepEqual(result, test.wantResult) {
 			t.Errorf("Wait %v, but got %v", result, test.wantResult)
 		}

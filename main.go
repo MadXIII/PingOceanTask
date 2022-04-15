@@ -20,6 +20,7 @@ func (s *Slice) Set(val string) error {
 }
 
 func main() {
+	start := time.Now()
 	var urls Slice
 	flag.Var(&urls, "url", "flag can be -url || --url to send urls")
 	str := flag.String("str", "", "flag can be -str || --str to send string")
@@ -33,9 +34,11 @@ func main() {
 
 	defer cancelFunc()
 
-	m := goSender(ctx, urls, *str)
+	m := worker(ctx, urls, *str)
 
+	fmt.Println(m)
 	for key, val := range m {
 		fmt.Printf("%s %d\n", key, val)
 	}
+	fmt.Println(time.Since(start))
 }
